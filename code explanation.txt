@@ -1,0 +1,83 @@
+# Για την υλοποίηση της άσκησης συμβουλεύτηκα την παρακάτω σελίδα
+# http://sdnopenflow.blogspot.com/2015/05/using-of-d-itg-traffic-generator-in.html
+# Την αντίστοιχη διαδικασία ακολούθησα και στο 2ο πείραμα, με τις απαραίτητες τροποποιήσεις
+
+# 1ο Βήμα
+# Δημιουργία κανόνων προώθησης
+
+Αρχικά ανοίγω terminal. Γράφω
+
+nano 1st_experiment_initial_flow_script.sh
+
+Εκεί γράφω τους κανόνες προώθησης. Στην συνέχεια αποθηκεύω το αρχείο και βγαίνω από αυτό. Μόλις επιστρέψω στο terminal γράφω
+
+chmod +x 1st_experiment_initial_flow_script.sh
+
+για να το κάνω εκτελέσιμο. Επαναλαμβάνω την διαδικασία για τα υπόλοιπα bash scripts κανόνων προώθησης. Μόλις τελείωσω κλείνω το terminal.
+
+# 2ο Βήμα
+# Download D-ITG
+
+0. Ανοίγω terminal
+
+sudo apt-get install unzip
+sudo apt-get install g++
+wget https://traffic.comics.unina.it/software/ITG/codice/D-ITG-2.8.1-r1023-src.zip --no-check-certificate
+unzip  D-ITG-2.8.1-r1023-src.zip
+cd  D-ITG-2.8.1-r1023/src
+make
+
+# 3o Βήμα
+# Run test
+
+1. Ξεκίνημα mininet στο ίδιο terminal
+
+cd mininet/custom/
+
+2. Προσθήκη τοπολογίας δικτύου
+
+sudo mn --custom AbilineTopo.py --topo abilinetopo --mac --arp --switch ovsk --controller remote
+
+3. Ανοίγω 2ο terminal. Προσθήκη αρχικών κανόνων στο 2ο terminal
+
+./1st_experiment_initial_flow_script.sh
+
+4. Τώρα στο 1ο terminal:
+h1 ping h11
+(βλέπουμε ότι εφαρμόσθηκαν σωστά οι κανόνες προώθησης και έχουμε ανταλλαγή πακέτων μεταξύ των hosts
+
+xterm h1
+xterm h11
+
+Θα ανοίξουν 2 καινούργια παράθυρα
+
+5. Στο xterm του h1 πρώτα:
+
+cd /home/ubuntu/D-ITG-2.8.1-r1023/bin
+./ITGRecv
+
+6. Στο xterm του h1:
+cd /home/ubuntu/D-ITG-2.8.1-r1023/bin
+./ITGSend –T UDP  –a 10.0.0.5 –c 100 –C 10 –t 15000 -l sender1_initial.log –x receiver1_initial.log
+
+(Με αυτόν τον τρόπο το ITGSend θα δημιουργήσει μία ροή UDP με σταθερό μέγεθος ωφέλιμου φορτίου (100 byte) και σταθερό ρυθμό πακέτων (10 pps) για 15 δευτερόλεπτα (15000 ms) και δύο αρχεία καταγραφής σε επίπεδο πακέτου θα δημιουργηθούν και στον αποστολέα (επιλογή -l) και πλευρά δέκτη (-x επιλογή) )
+
+
+7. Μόλις τελειώσει το flow:
+
+Στο xterm του h1:
+./ITGDec sender1_initial.log
+
+Στο xterm του h5 (χρειάζεται πρώτα Ctrl-C):
+./ITGDec receiver1_initial.log
+
+./ITGDec receiver1_initial.log -c 1000
+
+(με την πρώτη εντολή παίρνουμε μερικές γενικές πληροφορίες για την ανταλλαγή πακέτων, με την δεύτερη αποθηκεύεται αρχείο με αναλυτικά στοιχεία)
+
+8. Κλείνω τα xterm των h1 και h11. Στο terminal που φόρτωσα το 1ο bash script, φορτώνω το 2ο για την αλλαγή κατεύθυνσης στην προώθηση πακέτου.
+
+./1st_experiment_second_flow_script.sh
+
+9. Επαναλαμβάνω την διαδικασία που έκανα στα βήματα 4-7. Απλά τώρα αντίστοιχα έχω sender1_second , receiver1_second
+
